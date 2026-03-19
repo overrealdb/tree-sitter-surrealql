@@ -1,0 +1,34 @@
+{
+  "name": "tree-sitter-surrealql",
+  "version": "1.0.0",
+  "description": "Tree-sitter grammar for SurrealQL (SurrealDB 3+)",
+  "main": "bindings/node",
+  "types": "bindings/node",
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter generate && tree-sitter test",
+    "parse": "tree-sitter parse",
+    "highlight": "tree-sitter highlight"
+  },
+  "keywords": ["parser", "tree-sitter", "surrealql", "surrealdb"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/overrealdb/surql-parser.git",
+    "directory": "tree-sitter-surrealql"
+  },
+  "author": "overrealdb",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "node-addon-api": "^8.4.0",
+    "node-gyp-build": "^4.8.4"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.21.0"
+  },
+  "peerDependenciesMeta": {
+    "tree_sitter": { "optional": true }
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.25.6"
+  }
+}
