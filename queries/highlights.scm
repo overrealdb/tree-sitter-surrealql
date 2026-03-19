@@ -226,6 +226,13 @@
 (type_name) @type
 (parameterized_type) @type
 
+; ─── Table names (highlight identifiers in table position) ───
+(define_table (identifier) @type)
+(define_field (identifier) @type)
+(define_index (identifier) @type)
+(define_event (identifier) @type)
+(insert_statement (identifier) @type)
+
 ; ─── Special nodes ───
 (graph_path) @operator
 (cast_expression) @type
