@@ -79,34 +79,38 @@ module.exports = grammar({
         optional($.limit_clause),
         optional($.fetch_clause),
         optional($.timeout_clause),
-        optional(kw("PARALLEL")),
+        optional($.keyword_parallel),
         optional($.explain_clause),
       ),
 
     select_clause: ($) =>
-      seq(kw("SELECT"), choice(seq(kw("VALUE"), $.field), csv($.field_alias))),
+      seq(
+        $.keyword_select,
+        choice(seq($.keyword_value, $.field), csv($.field_alias)),
+      ),
 
-    field_alias: ($) => seq($.field, optional(seq(kw("AS"), $.identifier))),
+    field_alias: ($) => seq($.field, optional(seq($.keyword_as, $.identifier))),
     field: ($) => choice("*", $.value),
-    omit_clause: ($) => seq(kw("OMIT"), csv($.identifier)),
+    omit_clause: ($) => seq($.keyword_omit, csv($.identifier)),
 
-    from_clause: ($) => seq(kw("FROM"), optional(kw("ONLY")), csv($.value)),
+    from_clause: ($) =>
+      seq($.keyword_from, optional($.keyword_only), csv($.value)),
 
     create_statement: ($) =>
       seq(
-        kw("CREATE"),
-        optional(kw("ONLY")),
+        $.keyword_create,
+        optional($.keyword_only),
         csv($.value),
         optional(choice($.content_clause, $.set_clause)),
         optional($.return_clause),
         optional($.timeout_clause),
-        optional(kw("PARALLEL")),
+        optional($.keyword_parallel),
       ),
 
     update_statement: ($) =>
       seq(
-        kw("UPDATE"),
-        optional(kw("ONLY")),
+        $.keyword_update,
+        optional($.keyword_only),
         csv($.value),
         optional(
           choice(
@@ -120,13 +124,13 @@ module.exports = grammar({
         optional($.where_clause),
         optional($.return_clause),
         optional($.timeout_clause),
-        optional(kw("PARALLEL")),
+        optional($.keyword_parallel),
       ),
 
     upsert_statement: ($) =>
       seq(
-        kw("UPSERT"),
-        optional(kw("ONLY")),
+        $.keyword_upsert,
+        optional($.keyword_only),
         csv($.value),
         optional(
           choice(
@@ -140,25 +144,25 @@ module.exports = grammar({
         optional($.where_clause),
         optional($.return_clause),
         optional($.timeout_clause),
-        optional(kw("PARALLEL")),
+        optional($.keyword_parallel),
       ),
 
     delete_statement: ($) =>
       seq(
-        kw("DELETE"),
-        optional(kw("ONLY")),
+        $.keyword_delete,
+        optional($.keyword_only),
         csv($.value),
         optional($.where_clause),
         optional($.return_clause),
         optional($.timeout_clause),
-        optional(kw("PARALLEL")),
+        optional($.keyword_parallel),
       ),
 
     insert_statement: ($) =>
       seq(
-        kw("INSERT"),
-        optional(kw("IGNORE")),
-        kw("INTO"),
+        $.keyword_insert,
+        optional($.keyword_ignore),
+        $.keyword_into,
         $.identifier,
         choice(
           $.object,
@@ -167,10 +171,18 @@ module.exports = grammar({
             "(",
             csv($.identifier),
             ")",
-            kw("VALUES"),
+            $.keyword_values,
             csv(seq("(", csv($.value), ")")),
             optional(
-              seq(kw("ON DUPLICATE KEY UPDATE"), csv($.field_assignment)),
+              seq(
+                seq(
+                  $.keyword_on,
+                  $.keyword_duplicate,
+                  $.keyword_key,
+                  $.keyword_update,
+                ),
+                csv($.field_assignment),
+              ),
             ),
           ),
         ),
@@ -178,8 +190,8 @@ module.exports = grammar({
 
     relate_statement: ($) =>
       seq(
-        kw("RELATE"),
-        optional(kw("ONLY")),
+        $.keyword_relate,
+        optional($.keyword_only),
         $.relate_subject,
         "->",
         $.relate_subject,
@@ -188,7 +200,7 @@ module.exports = grammar({
         optional(choice($.content_clause, $.set_clause)),
         optional($.return_clause),
         optional($.timeout_clause),
-        optional(kw("PARALLEL")),
+        optional($.keyword_parallel),
       ),
 
     relate_subject: ($) => choice($.base_value, $.sub_query, $.function_call),
@@ -197,8 +209,8 @@ module.exports = grammar({
 
     define_statement: ($) =>
       seq(
-        kw("DEFINE"),
-        optional(choice(kw("OVERWRITE"), $.if_not_exists)),
+        $.keyword_define,
+        optional(choice($.keyword_overwrite, $.if_not_exists)),
         choice(
           $.define_namespace,
           $.define_database,
@@ -215,20 +227,20 @@ module.exports = grammar({
       ),
 
     define_namespace: ($) =>
-      seq(kw("NAMESPACE"), $.identifier, optional($.comment_clause)),
+      seq($.keyword_namespace, $.identifier, optional($.comment_clause)),
 
     define_database: ($) =>
-      seq(kw("DATABASE"), $.identifier, optional($.comment_clause)),
+      seq($.keyword_database, $.identifier, optional($.comment_clause)),
 
     define_table: ($) =>
       seq(
-        kw("TABLE"),
+        $.keyword_table,
         $.identifier,
         repeat(
           choice(
-            kw("DROP"),
-            kw("SCHEMAFULL"),
-            kw("SCHEMALESS"),
+            $.keyword_drop,
+            $.keyword_schemafull,
+            $.keyword_schemaless,
             $.table_type_clause,
             $.changefeed_clause,
             $.permissions_clause,
@@ -240,11 +252,11 @@ module.exports = grammar({
 
     define_field: ($) =>
       seq(
-        kw("FIELD"),
+        $.keyword_field,
         optional($.if_not_exists),
         $.field_path,
-        kw("ON"),
-        optional(kw("TABLE")),
+        $.keyword_on,
+        optional($.keyword_table),
         $.identifier,
         repeat(
           choice(
@@ -260,15 +272,15 @@ module.exports = grammar({
 
     define_index: ($) =>
       seq(
-        kw("INDEX"),
+        $.keyword_index,
         $.identifier,
-        kw("ON"),
-        optional(kw("TABLE")),
+        $.keyword_on,
+        optional($.keyword_table),
         $.identifier,
         $.fields_columns_clause,
         repeat(
           choice(
-            kw("UNIQUE"),
+            $.keyword_unique,
             $.search_analyzer_clause,
             $.mtree_clause,
             $.hnsw_clause,
@@ -279,14 +291,14 @@ module.exports = grammar({
 
     define_analyzer: ($) =>
       seq(
-        kw("ANALYZER"),
+        $.keyword_analyzer,
         $.identifier,
         repeat(choice($.tokenizers_clause, $.filters_clause, $.comment_clause)),
       ),
 
     define_function: ($) =>
       seq(
-        kw("FUNCTION"),
+        $.keyword_function,
         $.custom_function_name,
         $.param_list,
         optional(seq("->", $.type)),
@@ -296,135 +308,144 @@ module.exports = grammar({
 
     define_event: ($) =>
       seq(
-        kw("EVENT"),
+        $.keyword_event,
         $.identifier,
-        kw("ON"),
-        optional(kw("TABLE")),
+        $.keyword_on,
+        optional($.keyword_table),
         $.identifier,
-        optional(seq(kw("WHEN"), $.value)),
-        optional(kw("THEN")),
+        optional(seq($.keyword_when, $.value)),
+        optional($.keyword_then),
         choice($.block, $.sub_query),
         optional($.comment_clause),
       ),
 
     define_param: ($) =>
       seq(
-        kw("PARAM"),
+        $.keyword_param,
         $.variable_name,
-        kw("VALUE"),
+        $.keyword_value,
         $.value,
         optional($.permissions_basic_clause),
       ),
 
     define_access: ($) =>
       seq(
-        kw("ACCESS"),
+        $.keyword_access,
         $.identifier,
-        kw("ON"),
-        choice(kw("ROOT"), kw("NAMESPACE"), kw("DATABASE")),
-        kw("TYPE"),
+        $.keyword_on,
+        choice($.keyword_root, $.keyword_namespace, $.keyword_database),
+        $.keyword_type,
         choice(
-          seq(kw("RECORD"), optional($.access_record_clauses)),
-          seq(kw("JWT"), $.jwt_clauses),
+          seq($.keyword_record, optional($.access_record_clauses)),
+          seq($.keyword_jwt, $.jwt_clauses),
           seq(
-            kw("BEARER"),
-            optional(seq(kw("FOR"), choice(kw("USER"), kw("RECORD")))),
+            $.keyword_bearer,
+            optional(
+              seq($.keyword_for, choice($.keyword_user, $.keyword_record)),
+            ),
           ),
         ),
-        optional(seq(kw("AUTHENTICATE"), $.block)),
+        optional(seq($.keyword_authenticate, $.block)),
         optional($.duration_clause),
       ),
 
     access_record_clauses: ($) =>
       repeat1(
         choice(
-          seq(kw("SIGNUP"), choice($.block, $.sub_query)),
-          seq(kw("SIGNIN"), choice($.block, $.sub_query)),
-          seq(kw("WITH"), kw("JWT"), $.jwt_clauses),
+          seq($.keyword_signup, choice($.block, $.sub_query)),
+          seq($.keyword_signin, choice($.block, $.sub_query)),
+          seq($.keyword_with, $.keyword_jwt, $.jwt_clauses),
         ),
       ),
 
     jwt_clauses: ($) =>
       choice(
-        seq(kw("ALGORITHM"), $.identifier, kw("KEY"), $.string),
-        seq(kw("URL"), $.string),
-        seq(kw("JWKS"), $.string),
+        seq($.keyword_algorithm, $.identifier, $.keyword_key, $.string),
+        seq($.keyword_url, $.string),
+        seq($.keyword_jwks, $.string),
       ),
 
     define_user: ($) =>
       seq(
-        kw("USER"),
+        $.keyword_user,
         $.identifier,
-        kw("ON"),
-        choice(kw("ROOT"), kw("NAMESPACE"), kw("DATABASE")),
-        choice(seq(kw("PASSWORD"), $.string), seq(kw("PASSHASH"), $.string)),
-        kw("ROLES"),
-        choice(kw("OWNER"), kw("EDITOR"), kw("VIEWER")),
+        $.keyword_on,
+        choice($.keyword_root, $.keyword_namespace, $.keyword_database),
+        choice(
+          seq($.keyword_password, $.string),
+          seq($.keyword_passhash, $.string),
+        ),
+        $.keyword_roles,
+        choice($.keyword_owner, $.keyword_editor, $.keyword_viewer),
         optional($.duration_clause),
       ),
 
     remove_statement: ($) =>
       seq(
-        kw("REMOVE"),
+        $.keyword_remove,
         choice(
-          seq(kw("NAMESPACE"), optional($.if_exists), $.identifier),
-          seq(kw("DATABASE"), optional($.if_exists), $.identifier),
-          seq(kw("TABLE"), optional($.if_exists), $.identifier),
+          seq($.keyword_namespace, optional($.if_exists), $.identifier),
+          seq($.keyword_database, optional($.if_exists), $.identifier),
+          seq($.keyword_table, optional($.if_exists), $.identifier),
           seq(
-            kw("FIELD"),
+            $.keyword_field,
             optional($.if_exists),
             $.field_path,
-            kw("ON"),
-            optional(kw("TABLE")),
+            $.keyword_on,
+            optional($.keyword_table),
             $.identifier,
           ),
           seq(
-            kw("INDEX"),
+            $.keyword_index,
             optional($.if_exists),
             $.identifier,
-            kw("ON"),
-            optional(kw("TABLE")),
+            $.keyword_on,
+            optional($.keyword_table),
             $.identifier,
           ),
-          seq(kw("ANALYZER"), optional($.if_exists), $.identifier),
-          seq(kw("FUNCTION"), optional($.if_exists), $.custom_function_name),
+          seq($.keyword_analyzer, optional($.if_exists), $.identifier),
           seq(
-            kw("EVENT"),
+            $.keyword_function,
             optional($.if_exists),
-            $.identifier,
-            kw("ON"),
-            optional(kw("TABLE")),
-            $.identifier,
-          ),
-          seq(kw("PARAM"), optional($.if_exists), $.variable_name),
-          seq(
-            kw("ACCESS"),
-            optional($.if_exists),
-            $.identifier,
-            kw("ON"),
-            choice(kw("ROOT"), kw("NAMESPACE"), kw("DATABASE")),
+            $.custom_function_name,
           ),
           seq(
-            kw("USER"),
+            $.keyword_event,
             optional($.if_exists),
             $.identifier,
-            kw("ON"),
-            choice(kw("ROOT"), kw("NAMESPACE"), kw("DATABASE")),
+            $.keyword_on,
+            optional($.keyword_table),
+            $.identifier,
+          ),
+          seq($.keyword_param, optional($.if_exists), $.variable_name),
+          seq(
+            $.keyword_access,
+            optional($.if_exists),
+            $.identifier,
+            $.keyword_on,
+            choice($.keyword_root, $.keyword_namespace, $.keyword_database),
+          ),
+          seq(
+            $.keyword_user,
+            optional($.if_exists),
+            $.identifier,
+            $.keyword_on,
+            choice($.keyword_root, $.keyword_namespace, $.keyword_database),
           ),
         ),
       ),
 
     alter_statement: ($) =>
       seq(
-        kw("ALTER"),
-        kw("TABLE"),
+        $.keyword_alter,
+        $.keyword_table,
         optional($.if_exists),
         $.identifier,
         repeat(
           choice(
-            kw("DROP"),
-            kw("SCHEMAFULL"),
-            kw("SCHEMALESS"),
+            $.keyword_drop,
+            $.keyword_schemafull,
+            $.keyword_schemaless,
             $.permissions_clause,
             $.comment_clause,
           ),
@@ -433,54 +454,57 @@ module.exports = grammar({
 
     // ─── Control Flow ───
 
-    let_statement: ($) => seq(kw("LET"), $.variable_name, "=", $.value),
+    let_statement: ($) => seq($.keyword_let, $.variable_name, "=", $.value),
     if_statement: ($) =>
       seq(
-        kw("IF"),
+        $.keyword_if,
         $.value,
         $.block,
-        repeat(seq(kw("ELSE"), kw("IF"), $.value, $.block)),
-        optional(seq(kw("ELSE"), $.block)),
+        repeat(seq($.keyword_else, $.keyword_if, $.value, $.block)),
+        optional(seq($.keyword_else, $.block)),
       ),
     for_statement: ($) =>
-      seq(kw("FOR"), $.variable_name, kw("IN"), $.value, $.block),
-    return_statement: ($) => seq(kw("RETURN"), $.value),
-    throw_statement: ($) => seq(kw("THROW"), $.value),
-    break_statement: (_) => kw("BREAK"),
-    continue_statement: (_) => kw("CONTINUE"),
+      seq($.keyword_for, $.variable_name, $.keyword_in, $.value, $.block),
+    return_statement: ($) => seq($.keyword_return, $.value),
+    throw_statement: ($) => seq($.keyword_throw, $.value),
+    break_statement: ($) => $.keyword_break,
+    continue_statement: ($) => $.keyword_continue,
 
     // ─── Transaction ───
 
-    begin_statement: ($) => seq(kw("BEGIN"), optional(kw("TRANSACTION"))),
-    commit_statement: ($) => seq(kw("COMMIT"), optional(kw("TRANSACTION"))),
-    cancel_statement: ($) => seq(kw("CANCEL"), optional(kw("TRANSACTION"))),
+    begin_statement: ($) =>
+      seq($.keyword_begin, optional($.keyword_transaction)),
+    commit_statement: ($) =>
+      seq($.keyword_commit, optional($.keyword_transaction)),
+    cancel_statement: ($) =>
+      seq($.keyword_cancel, optional($.keyword_transaction)),
 
     // ─── Other Statements ───
 
     use_statement: ($) =>
       seq(
-        kw("USE"),
+        $.keyword_use,
         choice($.ns_clause, $.db_clause, seq($.ns_clause, $.db_clause)),
       ),
-    ns_clause: ($) => seq(kw("NS"), $.identifier),
-    db_clause: ($) => seq(kw("DB"), $.identifier),
+    ns_clause: ($) => seq($.keyword_ns, $.identifier),
+    db_clause: ($) => seq($.keyword_db, $.identifier),
 
     info_statement: ($) =>
       seq(
-        kw("INFO"),
-        kw("FOR"),
+        $.keyword_info,
+        $.keyword_for,
         choice(
-          kw("ROOT"),
-          choice(kw("NS"), kw("NAMESPACE")),
-          choice(kw("DB"), kw("DATABASE")),
-          seq(kw("TABLE"), $.identifier),
+          $.keyword_root,
+          choice($.keyword_ns, $.keyword_namespace),
+          choice($.keyword_db, $.keyword_database),
+          seq($.keyword_table, $.identifier),
           seq(
-            kw("USER"),
+            $.keyword_user,
             $.identifier,
             optional(
               seq(
-                kw("ON"),
-                choice(kw("ROOT"), kw("NAMESPACE"), kw("DATABASE")),
+                $.keyword_on,
+                choice($.keyword_root, $.keyword_namespace, $.keyword_database),
               ),
             ),
           ),
@@ -489,57 +513,58 @@ module.exports = grammar({
 
     show_statement: ($) =>
       seq(
-        kw("SHOW"),
-        kw("CHANGES"),
-        kw("FOR"),
-        kw("TABLE"),
+        $.keyword_show,
+        $.keyword_changes,
+        $.keyword_for,
+        $.keyword_table,
         $.identifier,
-        kw("SINCE"),
+        $.keyword_since,
         $.value,
         optional($.limit_clause),
       ),
 
-    live_statement: ($) => seq(kw("LIVE"), $.select_statement),
-    kill_statement: ($) => seq(kw("KILL"), $.value),
-    sleep_statement: ($) => seq(kw("SLEEP"), $.duration),
+    live_statement: ($) => seq($.keyword_live, $.select_statement),
+    kill_statement: ($) => seq($.keyword_kill, $.value),
+    sleep_statement: ($) => seq($.keyword_sleep, $.duration),
 
     // ─── Clauses ───
 
-    where_clause: ($) => seq(kw("WHERE"), $.value),
+    where_clause: ($) => seq($.keyword_where, $.value),
     split_clause: ($) =>
-      seq(kw("SPLIT"), optional(kw("AT")), csv($.identifier)),
+      seq($.keyword_split, optional($.keyword_at), csv($.identifier)),
     group_clause: ($) =>
-      seq(kw("GROUP"), optional(kw("BY")), csv($.identifier)),
+      seq($.keyword_group, optional($.keyword_by), csv($.identifier)),
     order_clause: ($) =>
-      seq(kw("ORDER"), optional(kw("BY")), csv($.order_criteria)),
+      seq($.keyword_order, optional($.keyword_by), csv($.order_criteria)),
     order_criteria: ($) =>
       seq(
         $.value,
-        optional(choice(kw("RAND"), kw("COLLATE"), kw("NUMERIC"))),
-        optional(choice(kw("ASC"), kw("DESC"))),
+        optional(choice($.keyword_rand, $.keyword_collate, $.keyword_numeric)),
+        optional(choice($.keyword_asc, $.keyword_desc)),
       ),
-    limit_clause: ($) => seq(kw("LIMIT"), optional(kw("BY")), $.value),
-    fetch_clause: ($) => seq(kw("FETCH"), csv($.identifier)),
-    timeout_clause: ($) => seq(kw("TIMEOUT"), $.duration),
-    explain_clause: ($) => seq(kw("EXPLAIN"), optional(kw("FULL"))),
+    limit_clause: ($) => seq($.keyword_limit, optional($.keyword_by), $.value),
+    fetch_clause: ($) => seq($.keyword_fetch, csv($.identifier)),
+    timeout_clause: ($) => seq($.keyword_timeout, $.duration),
+    explain_clause: ($) => seq($.keyword_explain, optional($.keyword_full)),
 
     content_clause: ($) =>
-      seq(kw("CONTENT"), choice($.object, $.variable_name)),
-    set_clause: ($) => seq(kw("SET"), csv($.field_assignment)),
-    unset_clause: ($) => seq(kw("UNSET"), csv($.identifier)),
-    merge_clause: ($) => seq(kw("MERGE"), choice($.object, $.variable_name)),
-    patch_clause: ($) => seq(kw("PATCH"), $.array),
+      seq($.keyword_content, choice($.object, $.variable_name)),
+    set_clause: ($) => seq($.keyword_set, csv($.field_assignment)),
+    unset_clause: ($) => seq($.keyword_unset, csv($.identifier)),
+    merge_clause: ($) =>
+      seq($.keyword_merge, choice($.object, $.variable_name)),
+    patch_clause: ($) => seq($.keyword_patch, $.array),
     return_clause: ($) =>
       prec(
         2,
         seq(
-          kw("RETURN"),
+          $.keyword_return,
           choice(
-            kw("BEFORE"),
-            kw("AFTER"),
-            kw("DIFF"),
-            kw("NONE"),
-            seq(optional(kw("VALUE")), csv($.value)),
+            $.keyword_before,
+            $.keyword_after,
+            $.keyword_diff,
+            $.keyword_none,
+            seq(optional($.keyword_value), csv($.value)),
           ),
         ),
       ),
@@ -550,29 +575,35 @@ module.exports = grammar({
     // DDL clauses
     table_type_clause: ($) =>
       seq(
-        kw("TYPE"),
+        $.keyword_type,
         choice(
-          kw("ANY"),
-          kw("NORMAL"),
+          $.keyword_any,
+          $.keyword_normal,
           seq(
-            kw("RELATION"),
+            $.keyword_relation,
             optional(
-              seq(optional(choice(kw("IN"), kw("FROM"))), csv_or($.identifier)),
+              seq(
+                optional(choice($.keyword_in, $.keyword_from)),
+                csv_or($.identifier),
+              ),
             ),
             optional(
-              seq(optional(choice(kw("OUT"), kw("TO"))), csv_or($.identifier)),
+              seq(
+                optional(choice($.keyword_out, $.keyword_to)),
+                csv_or($.identifier),
+              ),
             ),
-            optional(kw("ENFORCED")),
+            optional($.keyword_enforced),
           ),
         ),
       ),
 
     table_view_clause: ($) =>
       seq(
-        kw("AS"),
-        kw("SELECT"),
+        $.keyword_as,
+        $.keyword_select,
         csv($.field_alias),
-        kw("FROM"),
+        $.keyword_from,
         csv($.value),
         optional($.where_clause),
         optional($.group_clause),
@@ -580,45 +611,58 @@ module.exports = grammar({
 
     changefeed_clause: ($) =>
       seq(
-        kw("CHANGEFEED"),
+        $.keyword_changefeed,
         $.duration,
-        optional(seq(kw("INCLUDE"), kw("ORIGINAL"))),
+        optional(seq($.keyword_include, $.keyword_original)),
       ),
 
-    type_clause: ($) => seq(optional(kw("FLEXIBLE")), kw("TYPE"), $.type),
-    default_clause: ($) => seq(kw("DEFAULT"), optional(kw("ALWAYS")), $.value),
-    readonly_clause: (_) => kw("READONLY"),
-    assert_clause: ($) => seq(kw("ASSERT"), $.value),
+    type_clause: ($) =>
+      seq(optional($.keyword_flexible), $.keyword_type, $.type),
+    default_clause: ($) =>
+      seq($.keyword_default, optional($.keyword_always), $.value),
+    readonly_clause: ($) => $.keyword_readonly,
+    assert_clause: ($) => seq($.keyword_assert, $.value),
 
     permissions_clause: ($) =>
       seq(
-        kw("PERMISSIONS"),
+        $.keyword_permissions,
         choice(
-          kw("NONE"),
-          kw("FULL"),
+          $.keyword_none,
+          $.keyword_full,
           repeat1(
             seq(
-              kw("FOR"),
+              $.keyword_for,
               csv(
-                choice(kw("SELECT"), kw("CREATE"), kw("UPDATE"), kw("DELETE")),
+                choice(
+                  $.keyword_select,
+                  $.keyword_create,
+                  $.keyword_update,
+                  $.keyword_delete,
+                ),
               ),
-              choice($.where_clause, kw("NONE"), kw("FULL")),
+              choice($.where_clause, $.keyword_none, $.keyword_full),
             ),
           ),
         ),
       ),
 
     permissions_basic_clause: ($) =>
-      seq(kw("PERMISSIONS"), choice(kw("NONE"), kw("FULL"), $.where_clause)),
+      seq(
+        $.keyword_permissions,
+        choice($.keyword_none, $.keyword_full, $.where_clause),
+      ),
 
-    comment_clause: ($) => seq(kw("COMMENT"), $.string),
+    comment_clause: ($) => seq($.keyword_comment, $.string),
 
     fields_columns_clause: ($) =>
-      seq(choice(kw("FIELDS"), kw("COLUMNS")), csv($.identifier)),
+      seq(choice($.keyword_fields, $.keyword_columns), csv($.identifier)),
 
     tokenizers_clause: ($) =>
-      seq(kw("TOKENIZERS"), csv(choice("blank", "camel", "class", "punct"))),
-    filters_clause: ($) => seq(kw("FILTERS"), csv($.analyzer_filter)),
+      seq(
+        $.keyword_tokenizers,
+        csv(choice("blank", "camel", "class", "punct")),
+      ),
+    filters_clause: ($) => seq($.keyword_filters, csv($.analyzer_filter)),
     analyzer_filter: ($) =>
       choice(
         "ascii",
@@ -631,75 +675,78 @@ module.exports = grammar({
 
     search_analyzer_clause: ($) =>
       seq(
-        kw("SEARCH"),
-        kw("ANALYZER"),
+        $.keyword_search,
+        $.keyword_analyzer,
         $.identifier,
         repeat(
           choice(
-            seq(kw("BM25"), optional(seq("(", $.number, ",", $.number, ")"))),
-            kw("HIGHLIGHTS"),
-            seq(kw("DOC_IDS_CACHE"), $.int),
-            seq(kw("DOC_IDS_ORDER"), $.int),
-            seq(kw("DOC_LENGTHS_CACHE"), $.int),
-            seq(kw("DOC_LENGTHS_ORDER"), $.int),
-            seq(kw("POSTINGS_CACHE"), $.int),
-            seq(kw("POSTINGS_ORDER"), $.int),
-            seq(kw("TERMS_CACHE"), $.int),
-            seq(kw("TERMS_ORDER"), $.int),
+            seq(
+              $.keyword_bm25,
+              optional(seq("(", $.number, ",", $.number, ")")),
+            ),
+            $.keyword_highlights,
+            seq($.keyword_doc_ids_cache, $.int),
+            seq($.keyword_doc_ids_order, $.int),
+            seq($.keyword_doc_lengths_cache, $.int),
+            seq($.keyword_doc_lengths_order, $.int),
+            seq($.keyword_postings_cache, $.int),
+            seq($.keyword_postings_order, $.int),
+            seq($.keyword_terms_cache, $.int),
+            seq($.keyword_terms_order, $.int),
           ),
         ),
       ),
 
     mtree_clause: ($) =>
       seq(
-        kw("MTREE"),
-        kw("DIMENSION"),
+        $.keyword_mtree,
+        $.keyword_dimension,
         $.int,
         repeat(
           choice(
-            seq(kw("TYPE"), $.type),
-            seq(kw("DIST"), $.distance_value),
-            seq(kw("CAPACITY"), $.int),
+            seq($.keyword_type, $.type),
+            seq($.keyword_dist, $.distance_value),
+            seq($.keyword_capacity, $.int),
           ),
         ),
       ),
 
     hnsw_clause: ($) =>
       seq(
-        kw("HNSW"),
-        kw("DIMENSION"),
+        $.keyword_hnsw,
+        $.keyword_dimension,
         $.int,
         repeat(
           choice(
-            seq(kw("TYPE"), $.type),
-            seq(kw("DIST"), $.distance_value),
-            seq(kw("EFC"), $.int),
-            seq(kw("M"), $.int),
+            seq($.keyword_type, $.type),
+            seq($.keyword_dist, $.distance_value),
+            seq($.keyword_efc, $.int),
+            seq($.keyword_m, $.int),
           ),
         ),
       ),
 
     distance_value: ($) =>
       choice(
-        kw("CHEBYSHEV"),
-        kw("COSINE"),
-        kw("EUCLIDEAN"),
-        kw("HAMMING"),
-        kw("JACCARD"),
-        kw("MANHATTAN"),
-        kw("PEARSON"),
-        seq(kw("MINKOWSKI"), $.number),
+        $.keyword_chebyshev,
+        $.keyword_cosine,
+        $.keyword_euclidean,
+        $.keyword_hamming,
+        $.keyword_jaccard,
+        $.keyword_manhattan,
+        $.keyword_pearson,
+        seq($.keyword_minkowski, $.number),
       ),
 
-    session_clause: ($) => seq(kw("SESSION"), $.duration),
+    session_clause: ($) => seq($.keyword_session, $.duration),
 
     duration_clause: ($) =>
       seq(
-        kw("DURATION"),
+        $.keyword_duration,
         csv(
           seq(
-            kw("FOR"),
-            choice(kw("GRANT"), kw("TOKEN"), kw("SESSION")),
+            $.keyword_for,
+            choice($.keyword_grant, $.keyword_token, $.keyword_session),
             $.duration,
           ),
         ),
@@ -708,8 +755,8 @@ module.exports = grammar({
     param_list: ($) =>
       seq("(", optional(csv(seq($.variable_name, ":", $.type))), ")"),
 
-    if_not_exists: (_) => seq(kw("IF"), kw("NOT"), kw("EXISTS")),
-    if_exists: (_) => seq(kw("IF"), kw("EXISTS")),
+    if_not_exists: ($) => seq($.keyword_if, $.keyword_not, $.keyword_exists),
+    if_exists: ($) => seq($.keyword_if, $.keyword_exists),
 
     // ─── Values & Expressions ───
 
@@ -742,12 +789,12 @@ module.exports = grammar({
         $.point,
       ),
 
-    bool: (_) => choice(kw("TRUE"), kw("FALSE")),
-    none: (_) => kw("NONE"),
-    null: (_) => kw("NULL"),
+    bool: ($) => choice($.keyword_true, $.keyword_false),
+    none: ($) => $.keyword_none,
+    null: ($) => $.keyword_null,
 
     binary_expression: ($) => prec.left(1, seq($.value, $.operator, $.value)),
-    unary_expression: ($) => prec(10, seq(choice("!", kw("NOT")), $.value)),
+    unary_expression: ($) => prec(10, seq(choice("!", $.keyword_not), $.value)),
     cast_expression: ($) => prec(9, seq("<", $.type_name, ">", $.value)),
 
     path: ($) => prec.left(5, seq($.value, repeat1($.path_element))),
@@ -761,7 +808,7 @@ module.exports = grammar({
       seq(
         choice($.value, "?"),
         optional($.where_clause),
-        optional(seq(kw("AS"), $.identifier)),
+        optional(seq($.keyword_as, $.identifier)),
       ),
     subscript: ($) =>
       seq(
@@ -777,9 +824,9 @@ module.exports = grammar({
 
     function_call: ($) =>
       choice(
-        seq(kw("COUNT"), $.argument_list),
+        seq($.keyword_count, $.argument_list),
         seq(
-          choice($.function_name, $.custom_function_name, kw("RAND")),
+          choice($.function_name, $.custom_function_name, $.keyword_rand),
           optional($.version),
           $.argument_list,
         ),
@@ -848,25 +895,25 @@ module.exports = grammar({
           "||",
           "??",
           "?:",
-          kw("AND"),
-          kw("OR"),
-          kw("IS"),
-          seq(kw("IS"), kw("NOT")),
+          $.keyword_and,
+          $.keyword_or,
+          $.keyword_is,
+          seq($.keyword_is, $.keyword_not),
           // Containment
-          kw("CONTAINS"),
-          kw("CONTAINSNOT"),
-          kw("CONTAINSALL"),
-          kw("CONTAINSANY"),
-          kw("CONTAINSNONE"),
-          kw("IN"),
-          seq(kw("NOT"), kw("IN")),
-          kw("INSIDE"),
-          kw("NOTINSIDE"),
-          kw("ALLINSIDE"),
-          kw("ANYINSIDE"),
-          kw("NONEINSIDE"),
-          kw("OUTSIDE"),
-          kw("INTERSECTS"),
+          $.keyword_contains,
+          $.keyword_containsnot,
+          $.keyword_containsall,
+          $.keyword_containsany,
+          $.keyword_containsnone,
+          $.keyword_in,
+          seq($.keyword_not, $.keyword_in),
+          $.keyword_inside,
+          $.keyword_notinside,
+          $.keyword_allinside,
+          $.keyword_anyinside,
+          $.keyword_noneinside,
+          $.keyword_outside,
+          $.keyword_intersects,
           // Match
           seq("@", $.int, "@"),
           seq("<|", $.int, optional(seq(",", $.distance_value)), "|>"),
@@ -936,22 +983,202 @@ module.exports = grammar({
 
     // pipe-separated identifiers for record<user | post>
     csv_or: ($) => seq($.identifier, repeat(seq("|", $.identifier))),
+
+    // ─── Keywords (named rules for tree-sitter query matching) ───
+    keyword_select: (_) => kw_re("SELECT"),
+    keyword_from: (_) => kw_re("FROM"),
+    keyword_only: (_) => kw_re("ONLY"),
+    keyword_value: (_) => kw_re("VALUE"),
+    keyword_as: (_) => kw_re("AS"),
+    keyword_omit: (_) => kw_re("OMIT"),
+    keyword_explain: (_) => kw_re("EXPLAIN"),
+    keyword_full: (_) => kw_re("FULL"),
+    keyword_parallel: (_) => kw_re("PARALLEL"),
+    keyword_timeout: (_) => kw_re("TIMEOUT"),
+    keyword_fetch: (_) => kw_re("FETCH"),
+    keyword_limit: (_) => kw_re("LIMIT"),
+    keyword_by: (_) => kw_re("BY"),
+    keyword_rand: (_) => kw_re("RAND"),
+    keyword_collate: (_) => kw_re("COLLATE"),
+    keyword_numeric: (_) => kw_re("NUMERIC"),
+    keyword_asc: (_) => kw_re("ASC"),
+    keyword_desc: (_) => kw_re("DESC"),
+    keyword_order: (_) => kw_re("ORDER"),
+    keyword_with: (_) => kw_re("WITH"),
+    keyword_index: (_) => kw_re("INDEX"),
+    keyword_where: (_) => kw_re("WHERE"),
+    keyword_split: (_) => kw_re("SPLIT"),
+    keyword_at: (_) => kw_re("AT"),
+    keyword_group: (_) => kw_re("GROUP"),
+    keyword_begin: (_) => kw_re("BEGIN"),
+    keyword_cancel: (_) => kw_re("CANCEL"),
+    keyword_commit: (_) => kw_re("COMMIT"),
+    keyword_transaction: (_) => kw_re("TRANSACTION"),
+    keyword_and: (_) => kw_re("AND"),
+    keyword_or: (_) => kw_re("OR"),
+    keyword_is: (_) => kw_re("IS"),
+    keyword_not: (_) => kw_re("NOT"),
+    keyword_contains: (_) => kw_re("CONTAINS"),
+    keyword_containsnot: (_) => kw_re("CONTAINSNOT"),
+    keyword_containsall: (_) => kw_re("CONTAINSALL"),
+    keyword_containsany: (_) => kw_re("CONTAINSANY"),
+    keyword_containsnone: ($) => kw_re("CONTAINSNONE"),
+    keyword_inside: (_) => kw_re("INSIDE"),
+    keyword_in: (_) => kw_re("IN"),
+    keyword_notinside: (_) => kw_re("NOTINSIDE"),
+    keyword_allinside: (_) => kw_re("ALLINSIDE"),
+    keyword_anyinside: (_) => kw_re("ANYINSIDE"),
+    keyword_noneinside: (_) => kw_re("NONEINSIDE"),
+    keyword_outside: (_) => kw_re("OUTSIDE"),
+    keyword_intersects: (_) => kw_re("INTERSECTS"),
+    keyword_chebyshev: (_) => kw_re("CHEBYSHEV"),
+    keyword_cosine: (_) => kw_re("COSINE"),
+    keyword_euclidean: (_) => kw_re("EUCLIDEAN"),
+    keyword_hamming: (_) => kw_re("HAMMING"),
+    keyword_jaccard: (_) => kw_re("JACCARD"),
+    keyword_manhattan: (_) => kw_re("MANHATTAN"),
+    keyword_minkowski: (_) => kw_re("MINKOWSKI"),
+    keyword_pearson: (_) => kw_re("PEARSON"),
+    keyword_define: (_) => kw_re("DEFINE"),
+    keyword_overwrite: (_) => kw_re("OVERWRITE"),
+    keyword_analyzer: (_) => kw_re("ANALYZER"),
+    keyword_event: (_) => kw_re("EVENT"),
+    keyword_field: (_) => kw_re("FIELD"),
+    keyword_function: (_) => kw_re("FUNCTION"),
+    keyword_namespace: (_) => kw_re("NAMESPACE"),
+    keyword_param: (_) => kw_re("PARAM"),
+    keyword_drop: (_) => kw_re("DROP"),
+    keyword_schemafull: (_) => kw_re("SCHEMAFULL"),
+    keyword_schemaless: (_) => kw_re("SCHEMALESS"),
+    keyword_live: (_) => kw_re("LIVE"),
+    keyword_diff: (_) => kw_re("DIFF"),
+    keyword_flexible: (_) => kw_re("FLEXIBLE"),
+    keyword_readonly: (_) => kw_re("READONLY"),
+    keyword_jwks: (_) => kw_re("JWKS"),
+    keyword_bm25: (_) => kw_re("BM25"),
+    keyword_doc_ids_cache: (_) => kw_re("DOC_IDS_CACHE"),
+    keyword_doc_ids_order: (_) => kw_re("DOC_IDS_ORDER"),
+    keyword_doc_lengths_cache: (_) => kw_re("DOC_LENGTHS_CACHE"),
+    keyword_doc_lengths_order: (_) => kw_re("DOC_LENGTHS_ORDER"),
+    keyword_postings_cache: (_) => kw_re("POSTINGS_CACHE"),
+    keyword_postings_order: (_) => kw_re("POSTINGS_ORDER"),
+    keyword_terms_cache: (_) => kw_re("TERMS_CACHE"),
+    keyword_terms_order: (_) => kw_re("TERMS_ORDER"),
+    keyword_highlights: (_) => kw_re("HIGHLIGHTS"),
+    keyword_any: (_) => kw_re("ANY"),
+    keyword_normal: (_) => kw_re("NORMAL"),
+    keyword_relation: (_) => kw_re("RELATION"),
+    keyword_out: (_) => kw_re("OUT"),
+    keyword_to: (_) => kw_re("TO"),
+    keyword_changefeed: (_) => kw_re("CHANGEFEED"),
+    keyword_include: (_) => kw_re("INCLUDE"),
+    keyword_original: (_) => kw_re("ORIGINAL"),
+    keyword_content: (_) => kw_re("CONTENT"),
+    keyword_merge: (_) => kw_re("MERGE"),
+    keyword_patch: (_) => kw_re("PATCH"),
+    keyword_before: (_) => kw_re("BEFORE"),
+    keyword_after: (_) => kw_re("AFTER"),
+    keyword_table: (_) => kw_re("TABLE"),
+    keyword_root: (_) => kw_re("ROOT"),
+    keyword_use: (_) => kw_re("USE"),
+    keyword_ns: (_) => kw_re("NS"),
+    keyword_db: (_) => kw_re("DB"),
+    keyword_on: (_) => kw_re("ON"),
+    keyword_user: (_) => kw_re("USER"),
+    keyword_roles: (_) => kw_re("ROLES"),
+    keyword_remove: (_) => kw_re("REMOVE"),
+    keyword_create: (_) => kw_re("CREATE"),
+    keyword_delete: (_) => kw_re("DELETE"),
+    keyword_update: (_) => kw_re("UPDATE"),
+    keyword_insert: (_) => kw_re("INSERT"),
+    keyword_into: (_) => kw_re("INTO"),
+    keyword_tokenizers: (_) => kw_re("TOKENIZERS"),
+    keyword_filters: (_) => kw_re("FILTERS"),
+    keyword_when: (_) => kw_re("WHEN"),
+    keyword_then: (_) => kw_re("THEN"),
+    keyword_type: (_) => kw_re("TYPE"),
+    keyword_default: (_) => kw_re("DEFAULT"),
+    keyword_assert: (_) => kw_re("ASSERT"),
+    keyword_permissions: (_) => kw_re("PERMISSIONS"),
+    keyword_relate: (_) => kw_re("RELATE"),
+    keyword_ignore: (_) => kw_re("IGNORE"),
+    keyword_values: (_) => kw_re("VALUES"),
+    keyword_for: (_) => kw_re("FOR"),
+    keyword_info: (_) => kw_re("INFO"),
+    keyword_show: (_) => kw_re("SHOW"),
+    keyword_changes: (_) => kw_re("CHANGES"),
+    keyword_since: (_) => kw_re("SINCE"),
+    keyword_comment: (_) => kw_re("COMMENT"),
+    keyword_fields: (_) => kw_re("FIELDS"),
+    keyword_columns: (_) => kw_re("COLUMNS"),
+    keyword_unique: (_) => kw_re("UNIQUE"),
+    keyword_search: (_) => kw_re("SEARCH"),
+    keyword_session: (_) => kw_re("SESSION"),
+    keyword_signin: (_) => kw_re("SIGNIN"),
+    keyword_signup: (_) => kw_re("SIGNUP"),
+    keyword_if: (_) => kw_re("IF"),
+    keyword_else: (_) => kw_re("ELSE"),
+    keyword_exists: (_) => kw_re("EXISTS"),
+    keyword_database: (_) => kw_re("DATABASE"),
+    keyword_password: (_) => kw_re("PASSWORD"),
+    keyword_passhash: (_) => kw_re("PASSHASH"),
+    keyword_duplicate: (_) => kw_re("DUPLICATE"),
+    keyword_token: (_) => kw_re("TOKEN"),
+    keyword_count: (_) => kw_re("COUNT"),
+    keyword_set: (_) => kw_re("SET"),
+    keyword_return: (_) => kw_re("RETURN"),
+    keyword_let: (_) => kw_re("LET"),
+    keyword_throw: (_) => kw_re("THROW"),
+    keyword_unset: (_) => kw_re("UNSET"),
+    keyword_always: (_) => kw_re("ALWAYS"),
+    keyword_alter: (_) => kw_re("ALTER"),
+    keyword_break: (_) => kw_re("BREAK"),
+    keyword_continue: (_) => kw_re("CONTINUE"),
+    keyword_sleep: (_) => kw_re("SLEEP"),
+    keyword_kill: (_) => kw_re("KILL"),
+    keyword_mtree: (_) => kw_re("MTREE"),
+    keyword_dimension: (_) => kw_re("DIMENSION"),
+    keyword_dist: (_) => kw_re("DIST"),
+    keyword_efc: (_) => kw_re("EFC"),
+    keyword_m: (_) => kw_re("M"),
+    keyword_capacity: (_) => kw_re("CAPACITY"),
+    keyword_hnsw: (_) => kw_re("HNSW"),
+    keyword_owner: (_) => kw_re("OWNER"),
+    keyword_editor: (_) => kw_re("EDITOR"),
+    keyword_viewer: (_) => kw_re("VIEWER"),
+    keyword_duration: (_) => kw_re("DURATION"),
+    keyword_enforced: (_) => kw_re("ENFORCED"),
+    keyword_algorithm: (_) => kw_re("ALGORITHM"),
+    keyword_key: (_) => kw_re("KEY"),
+    keyword_url: (_) => kw_re("URL"),
+    keyword_jwt: (_) => kw_re("JWT"),
+    keyword_record: (_) => kw_re("RECORD"),
+    keyword_bearer: (_) => kw_re("BEARER"),
+    keyword_authenticate: (_) => kw_re("AUTHENTICATE"),
+    keyword_grant: (_) => kw_re("GRANT"),
+    keyword_access: (_) => kw_re("ACCESS"),
+    keyword_upsert: (_) => kw_re("UPSERT"),
+    keyword_none: ($) => kw_re("NONE"),
+    keyword_null: ($) => kw_re("NULL"),
+    keyword_true: (_) => kw_re("TRUE"),
+    keyword_false: (_) => kw_re("FALSE"),
   },
 });
 
 // ─── Grammar Helpers ───
 
-function kw(word) {
+/// Case-insensitive keyword regex (for use in named rules).
+function kw_re(word) {
   if (word.includes(" ")) {
-    return seq(...word.split(" ").map((w) => kw(w)));
+    return seq(...word.split(" ").map((w) => kw_re(w)));
   }
-  return alias(
-    new RegExp(
-      [...word].map((c) => `[${c.toLowerCase()}${c.toUpperCase()}]`).join(""),
-    ),
-    "keyword_" + word.toLowerCase().replace(/ /g, "_"),
+  return new RegExp(
+    [...word].map((c) => `[${c.toLowerCase()}${c.toUpperCase()}]`).join(""),
   );
 }
+
+// kw() is no longer used — all grammar rules reference $.keyword_* directly.
+// Kept for documentation only.
 
 function csv(rule) {
   return seq(rule, repeat(seq(",", rule)));
