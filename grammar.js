@@ -864,7 +864,7 @@ module.exports = grammar({
       seq($.type_name, "<", csv(choice($.type, $.literal_value)), ">"),
     array_type: ($) => seq("[", csv($.type), "]"),
     type_object: ($) => seq("{", csv(seq($.object_key, ":", $.type)), "}"),
-    type_name: (_) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    type_name: (_) => token(prec(-1, /[a-zA-Z_][a-zA-Z0-9_]*/)),
     literal_value: ($) => choice($.int, $.string, $.duration),
 
     // ─── Operators ───
@@ -873,6 +873,7 @@ module.exports = grammar({
       prec.left(
         choice(
           // Comparison
+          "=",
           "==",
           "!=",
           "?=",
@@ -954,17 +955,17 @@ module.exports = grammar({
     // ─── Identifiers ───
 
     variable_name: (_) => /\$[a-zA-Z_][a-zA-Z0-9_]*/,
-    identifier: (_) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    identifier: (_) => token(prec(-1, /[a-zA-Z_][a-zA-Z0-9_]*/)),
     field_path: ($) => seq($.identifier, repeat(seq(".", $.identifier))),
     custom_function_name: (_) => /fn(::[a-zA-Z_][a-zA-Z0-9_]*)*/,
-    function_name: (_) => /[a-zA-Z_][a-zA-Z0-9_]*(::[a-zA-Z_][a-zA-Z0-9_]*)*/,
+    function_name: (_) => /[a-zA-Z_][a-zA-Z0-9_]*(::[a-zA-Z_][a-zA-Z0-9_]*)+/,
 
     // ─── Structures ───
 
     array: ($) => seq("[", optional(csv_trailing($.value)), "]"),
     object: ($) => seq("{", optional(csv_trailing($.object_property)), "}"),
     object_property: ($) => seq(choice($.object_key, $.string), ":", $.value),
-    object_key: (_) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    object_key: (_) => token(prec(-1, /[a-zA-Z_][a-zA-Z0-9_]*/)),
 
     record_id: ($) =>
       prec.left(
@@ -1167,14 +1168,15 @@ module.exports = grammar({
 
 // ─── Grammar Helpers ───
 
-/// Case-insensitive keyword regex (for use in named rules).
+/// Case-insensitive keyword token (lexer priority over identifier).
 function kw_re(word) {
   if (word.includes(" ")) {
     return seq(...word.split(" ").map((w) => kw_re(w)));
   }
-  return new RegExp(
+  const re = new RegExp(
     [...word].map((c) => `[${c.toLowerCase()}${c.toUpperCase()}]`).join(""),
   );
+  return token(prec(1, re));
 }
 
 // kw() is no longer used — all grammar rules reference $.keyword_* directly.
