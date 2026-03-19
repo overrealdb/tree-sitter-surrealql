@@ -143,7 +143,6 @@
   (keyword_database)
   (keyword_password)
   (keyword_passhash)
-  (keyword_on_duplicate_key_update)
   (keyword_count)
   (keyword_set)
   (keyword_return)
